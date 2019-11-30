@@ -1,4 +1,5 @@
 #include <iostream>
+#include <assert.h>
 
 
 template<class T>
@@ -7,9 +8,23 @@ struct defaultDelete {
     {
         delete ptr;
     }
+};
 
-private:
-    T* pointedElement;
+template<class T>
+struct arrayDelete {
+    void operator()(T* ptr)
+    {
+        delete[] ptr;
+    }
+};
+
+template<class T>
+struct debugDelete {
+    void operator()(T* ptr)
+    {
+        std::cout << "Object at memory address <" << ptr << "> being deleted now.\n";
+        delete ptr;
+    }
 };
 
 template<class T, class D = defaultDelete<T>>
@@ -17,50 +32,47 @@ class UniquePtr
 {
 private:
     T* pointedElement;
+    D deleter;
 
 public:
     T* release();
     void reset();
-    bool swap(T* other);
+    T* swap(T* other);
 
-    explicit UniquePtr(T *);
+    explicit UniquePtr(T*);
+    explicit UniquePtr(T*, D);
     UniquePtr();
-    UniquePtr(UniquePtr &other);
-    UniquePtr(const UniquePtr &other);
-    UniquePtr(UniquePtr&& other);
+    UniquePtr(const UniquePtr &other) = delete;
+    UniquePtr(UniquePtr&& other) noexcept;
 
     ~UniquePtr();
 
-    UniquePtr& operator=(UniquePtr &other);
-    UniquePtr& operator=(const UniquePtr &other);
-    UniquePtr& operator=(UniquePtr&& other);
+    UniquePtr& operator=(const UniquePtr &other) = delete;
+    UniquePtr& operator=(UniquePtr&& other) noexcept;
 
     T* operator->();
-    T& operator*();
-    operator bool();
+    T operator*() const;
+    operator bool() const;
 
 };
 
 /// Constructors
 // Standard constructor
 template<class T, class D>
-UniquePtr<T, D>::UniquePtr(T *pointTo) : pointedElement(pointTo){}
+UniquePtr<T, D>::UniquePtr(T* pointTo) : pointedElement(pointTo), deleter(defaultDelete<T>()) {}
 
 template<class T, class D>
-UniquePtr<T, D>::UniquePtr() {}
+UniquePtr<T, D>::UniquePtr(T* pointTo, D customDeleter) : pointedElement(pointTo), deleter(customDeleter) {}
+
+template<class T, class D>
+UniquePtr<T, D>::UniquePtr() : deleter(defaultDelete<T>()) {}
 
 // Copy constructor
-template<class T, class D>
-UniquePtr<T, D>::UniquePtr(UniquePtr &other)
-        : pointedElement(other.pointedElement) {}
-
-template<class T, class D>
-UniquePtr<T, D>::UniquePtr(const UniquePtr &other)
-        : pointedElement(other.pointedElement) {}
+// Should not be used, thus ``= delete;``
 
 // Move constructor
 template<class T, class D>
-UniquePtr<T, D>::UniquePtr(UniquePtr &&other) : pointedElement(other.pointedElement)
+UniquePtr<T, D>::UniquePtr(UniquePtr &&other) noexcept : pointedElement(other.pointedElement), deleter(other.deleter)
 {
     other.pointedElement = nullptr;
 }
@@ -70,41 +82,24 @@ UniquePtr<T, D>::UniquePtr(UniquePtr &&other) : pointedElement(other.pointedElem
 template<class T, class D>
 UniquePtr<T, D>::~UniquePtr()
 {
-    D(pointedElement);
+    deleter(pointedElement);
 }
 
 
 /// Operators
-// Copy assignment operators
-template<class T, class D>
-UniquePtr<T, D> &UniquePtr<T, D>::operator=(UniquePtr &other)
-{
-    if(this != &other)
-    {
-        pointedElement = other.pointedElement;
-    }
+// Copy assignment operator
+// Should not be used, thus delete
 
-    return *this;
-}
-
-template<class T, class D>
-UniquePtr<T, D> &UniquePtr<T, D>::operator=(const UniquePtr &other)
-{
-    if(this != &other)
-    {
-        pointedElement = other.pointedElement;
-    }
-
-    return *this;
-}
 
 // Move assignment operator
 template<class T, class D>
-UniquePtr<T, D> &UniquePtr<T, D>::operator=(UniquePtr &&other)
+UniquePtr<T, D> &UniquePtr<T, D>::operator=(UniquePtr &&other) noexcept
 {
     if(this != &other)
     {
         pointedElement = other.pointedElement;
+        deleter = other.deleter;
+
         other.pointedElement = nullptr;
     }
 
@@ -115,20 +110,23 @@ UniquePtr<T, D> &UniquePtr<T, D>::operator=(UniquePtr &&other)
 template<class T, class D>
 T* UniquePtr<T, D>::operator->()
 {
+    assert(pointedElement != nullptr);
+
     return pointedElement;
 }
 
 template<class T, class D>
-UniquePtr<T, D>::operator bool()
+UniquePtr<T, D>::operator bool() const
 {
     return pointedElement != nullptr;
 }
 
 template<class T, class D>
-T& UniquePtr<T, D>::operator*()
+T UniquePtr<T, D>::operator*() const
 {
-    if(pointedElement)
-        return *pointedElement;
+    assert(pointedElement != nullptr);
+
+    return (*pointedElement);
 }
 
 
@@ -142,23 +140,32 @@ T *UniquePtr<T, D>::release()
     return temp;
 }
 
+/*
+ * The assessment's point on this function was kind of confusing ...
+ * I thought just resetting the pointer to nullptr would be kind of stupid as you wouldn't deallocate the memory and thus
+ * it would be ease for programmer's to cause memory leaks. This is why i have decided to call for the deleter.
+ * I researched on cpp-reference where it was done like this.
+ */
 template<class T, class D>
 void UniquePtr<T, D>::reset()
 {
+    deleter(pointedElement);
     pointedElement = nullptr;
 }
 
+/*
+ * This point was not very clear to me as well. for me a swap would take the argument of another UniquePtr and then
+ * truly swapping their pointed elements. I now interpreted it as it should return the current pointed object and take
+ * the new parameter as the member pointer.
+ */
 template<class T, class D>
-bool UniquePtr<T, D>::swap(T *other)
+T* UniquePtr<T, D>::swap(T* other)
 {
-    if (other)
-    {
-        pointedElement = other;
 
-        return  true;
-    }
+    T* temp = pointedElement;
+    pointedElement = other;
 
-    return false;
+    return temp;
 }
 
 
@@ -166,6 +173,13 @@ int main() {
     struct Entity {
         int id = -1;
     };
+
+    {
+        UniquePtr<Entity, arrayDelete<Entity>> array(new Entity[4], arrayDelete<Entity>());
+        UniquePtr<Entity, defaultDelete<Entity>> noArray(new Entity, defaultDelete<Entity>());
+        UniquePtr<Entity, debugDelete<Entity>> debug(new Entity, debugDelete<Entity>());
+
+    }
 
     {
         // Testing basic usage
@@ -244,7 +258,7 @@ int main() {
         UniquePtr<std::string> stringPointer2(new std::string("Hello Moon"));
 
         // Testing copy constructor and assignment
-        std::cout << "Testing  copy constructor and assignment" << std::endl << std::endl;
+        /*std::cout << "Testing  copy constructor and assignment" << std::endl << std::endl;
         UniquePtr<Entity> otherEntPointer(entityPointer);
         std::cout << otherEntPointer->id << std::endl;
         std::cout << entityPointer->id << std::endl;
@@ -252,11 +266,13 @@ int main() {
         otherEntPointer = entityPointer2;
         std::cout << otherEntPointer->id << std::endl;
         std::cout << entityPointer2->id << std::endl;
-        std::cout << std::endl << std::endl;
+        std::cout << std::endl << std::endl;*/
 
         // Testing move constructor and assignment
-        std::cout << "Testing  copy constructor and assignment" << std::endl << std::endl;
-        otherEntPointer = entityPointer2;
+        std::cout << "Testing  move constructor and assignment" << std::endl << std::endl;
+        UniquePtr<Entity> otherEntPointer(new Entity);
+        otherEntPointer->id = 5;
+
         UniquePtr<Entity> movedEntPointer = std::move(otherEntPointer);
         std::cout << movedEntPointer->id << std::endl;
         std::cout << otherEntPointer << std::endl;
@@ -269,7 +285,7 @@ int main() {
 
     // Testing with examples from cpp-refernce
     {
-        {
+        /*{
             UniquePtr<int> foo(new int);
             UniquePtr<int> bar(new int(100));
 
@@ -278,7 +294,7 @@ int main() {
             std::cout << "foo: " << *foo << '\n';
             std::cout << "bar: " << *bar << '\n';
 
-        }
+        }*/
 
         {
             struct C {
@@ -286,7 +302,7 @@ int main() {
                 int b;
             };
 
-            UniquePtr<C> foo;
+            UniquePtr<C> foo(new C);
             UniquePtr<C> bar(new C);
 
             foo->a = 10;
@@ -309,7 +325,7 @@ int main() {
             else std::cout << "bar is empty\n";
         }
 
-        {
+        /*{
             UniquePtr<int> auto_pointer (new int);
             int * manual_pointer;
 
