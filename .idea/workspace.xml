@@ -12,7 +12,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab822a5f-2235-46e2-a5e8-2e68e6aa0230" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cmake-build-debug/CMakeFiles/untitled.dir/main.cpp.o" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmake-build-debug/untitled" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/untitled" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
@@ -37,16 +39,13 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6003">
-              <caret line="24" column="83" selection-start-line="24" selection-start-column="83" selection-end-line="24" selection-end-column="83" />
+            <state relative-caret-position="877">
+              <caret line="395" column="36" lean-forward="true" selection-start-line="395" selection-start-column="36" selection-end-line="395" selection-end-column="36" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-                <element signature="e#30#39#0" expanded="true" />
-                <element signature="e#135#144#0" expanded="true" />
                 <element signature="e#260#269#0" expanded="true" />
-                <element signature="e#168#205#0" expanded="true" />
-                <element signature="e#1907#1925#0" expanded="true" />
-                <element signature="e#2243#2261#0" expanded="true" />
+                <element signature="e#3962#3980#0" expanded="true" />
+                <element signature="e#3862#3880#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -86,7 +85,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -103,6 +101,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -144,18 +143,18 @@
       <updated>1574950805273</updated>
       <workItem from="1574950806579" duration="14584000" />
       <workItem from="1575018400725" duration="198000" />
-      <workItem from="1575018627830" duration="9402000" />
+      <workItem from="1575018627830" duration="10658000" />
+      <workItem from="1575197998024" duration="2735000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="24184000" />
+    <option name="totallyTimeSpent" value="28175000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="1920" y="0" width="2331" height="2160" extended-state="5" />
-    <editor active="true" />
+    <frame x="1920" y="0" width="2331" height="2160" extended-state="4" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19235896" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.19546868" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -185,13 +184,18 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
-          <line>84</line>
+          <line>86</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/main.cpp</url>
           <line>8</line>
           <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/main.cpp</url>
+          <line>100</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -203,18 +207,22 @@
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file:///usr/include/c++/7/ostream">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="423">
+          <caret line="555" column="12" selection-start-line="555" selection-start-column="12" selection-end-line="555" selection-end-column="12" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6003">
-          <caret line="24" column="83" selection-start-line="24" selection-start-column="83" selection-end-line="24" selection-end-column="83" />
+        <state relative-caret-position="877">
+          <caret line="395" column="36" lean-forward="true" selection-start-line="395" selection-start-column="36" selection-end-line="395" selection-end-column="36" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#30#39#0" expanded="true" />
-            <element signature="e#135#144#0" expanded="true" />
             <element signature="e#260#269#0" expanded="true" />
-            <element signature="e#168#205#0" expanded="true" />
-            <element signature="e#1907#1925#0" expanded="true" />
-            <element signature="e#2243#2261#0" expanded="true" />
+            <element signature="e#3962#3980#0" expanded="true" />
+            <element signature="e#3862#3880#0" expanded="true" />
           </folding>
         </state>
       </provider>

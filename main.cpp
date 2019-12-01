@@ -38,6 +38,8 @@ public:
     T* release();
     void reset();
     T* swap(T* other);
+    void swap(UniquePtr& other);
+    void replace(T* other);
 
     explicit UniquePtr(T*);
     explicit UniquePtr(T*, D);
@@ -51,7 +53,7 @@ public:
     UniquePtr& operator=(UniquePtr&& other) noexcept;
 
     T* operator->();
-    T operator*() const;
+    T& operator*() const;
     operator bool() const;
 
 };
@@ -88,7 +90,7 @@ UniquePtr<T, D>::~UniquePtr()
 
 /// Operators
 // Copy assignment operator
-// Should not be used, thus delete
+// Should not be used, thus ``= delete;``
 
 
 // Move assignment operator
@@ -97,12 +99,13 @@ UniquePtr<T, D> &UniquePtr<T, D>::operator=(UniquePtr &&other) noexcept
 {
     if(this != &other)
     {
+        reset(); // delete own object
+
         pointedElement = other.pointedElement;
         deleter = other.deleter;
 
         other.pointedElement = nullptr;
     }
-
     return *this;
 }
 
@@ -122,7 +125,7 @@ UniquePtr<T, D>::operator bool() const
 }
 
 template<class T, class D>
-T UniquePtr<T, D>::operator*() const
+T& UniquePtr<T, D>::operator*() const
 {
     assert(pointedElement != nullptr);
 
@@ -132,7 +135,7 @@ T UniquePtr<T, D>::operator*() const
 
 /// Member functions
 template<class T, class D>
-T *UniquePtr<T, D>::release()
+T* UniquePtr<T, D>::release()
 {
     T* temp = pointedElement;
     pointedElement = nullptr;
@@ -156,7 +159,9 @@ void UniquePtr<T, D>::reset()
 /*
  * This point was not very clear to me as well. for me a swap would take the argument of another UniquePtr and then
  * truly swapping their pointed elements. I now interpreted it as it should return the current pointed object and take
- * the new parameter as the member pointer.
+ * the new parameter as the member pointer. This can easily lead to memory leaks however. This is why i also implemented
+ * a replace() function, which simply takes a new pointer.
+ * Also i did another overload which takes a Uniqueptr as argument.
  */
 template<class T, class D>
 T* UniquePtr<T, D>::swap(T* other)
@@ -167,6 +172,28 @@ T* UniquePtr<T, D>::swap(T* other)
 
     return temp;
 }
+
+template<class T, class D>
+void UniquePtr<T, D>::swap(UniquePtr& other)
+{
+    T* temp = pointedElement;
+    D deleterTemp = deleter;
+
+    pointedElement = other.pointedElement;
+    deleter = other.deleter;
+    other.pointedElement = temp;
+    other.deleter = deleterTemp;
+}
+
+template<class T, class D>
+void UniquePtr<T, D>::replace(T *other)
+{
+    reset();
+
+    pointedElement = other;
+}
+
+
 
 
 int main() {
@@ -232,6 +259,8 @@ int main() {
         auto* entity2 = new Entity;
         UniquePtr<Entity> entityPointer2(entity2);
         std::cout << "Pre-reset: " << entityPointer2 << std::endl;
+        std::cout << entity2->id << std::endl;
+
         entityPointer2.reset();
         std::cout << "Post-reset: " << entityPointer2 << std::endl;
         std::cout << entity2->id << std::endl;
@@ -243,7 +272,24 @@ int main() {
         std::cout << stringPointer << std::endl;
         stringPointer.swap(new std::string("Hello Moon"));
         std::cout << stringPointer->c_str() << std::endl;
-        //stringPointer.swap(*releasedPointer);
+        UniquePtr<std::string> swappedStringPointer(stringPointer.swap(&(*releasedPointer)));
+        std::cout << "Stringpointer: " << stringPointer->c_str() << std::endl;
+        stringPointer.swap(new std::string("Hello Mars"));
+        std::cout << "Stringpointer: " << stringPointer->c_str() << std::endl;
+
+        stringPointer.swap(swappedStringPointer);
+        std::cout << "Stringpointer: " << stringPointer->c_str() << std::endl;
+        std::cout << "Swappedpointer: " << swappedStringPointer->c_str() << std::endl;
+        std::cout << std::endl << std::endl;
+
+        // Testing replace function
+        std::cout << "Testing replace function" << std::endl << std::endl;
+        std::cout << stringPointer << std::endl;
+        stringPointer.replace(new std::string("Hello Moon"));
+        std::cout << stringPointer->c_str() << std::endl;
+        stringPointer.replace(new std::string("Hello Jupiter"));
+        std::cout << stringPointer->c_str() << std::endl;
+        stringPointer.replace(new std::string("Hello Mars"));
         std::cout << stringPointer->c_str() << std::endl;
         std::cout << std::endl << std::endl;
 
@@ -285,7 +331,7 @@ int main() {
 
     // Testing with examples from cpp-refernce
     {
-        /*{
+        {
             UniquePtr<int> foo(new int);
             UniquePtr<int> bar(new int(100));
 
@@ -294,7 +340,7 @@ int main() {
             std::cout << "foo: " << *foo << '\n';
             std::cout << "bar: " << *bar << '\n';
 
-        }*/
+        }
 
         {
             struct C {
@@ -325,7 +371,7 @@ int main() {
             else std::cout << "bar is empty\n";
         }
 
-        /*{
+        {
             UniquePtr<int> auto_pointer (new int);
             int * manual_pointer;
 
@@ -338,31 +384,32 @@ int main() {
 
             delete manual_pointer;
         }
-        /*
+
         {
             UniquePtr<int> up;  // empty
 
-            up.reset (new int);       // takes ownership of pointer
-            *up=5;
+            up.reset();       // takes ownership of pointer
+            up.replace(new int(5));
             std::cout << *up << '\n';
 
-            up.reset (new int);       // deletes managed object, acquires new pointer
-            *up=10;
+            up.reset();       // deletes managed object, acquires new pointer
+            up.replace(new int(10));
             std::cout << *up << '\n';
 
             up.reset();               // deletes managed object
         }
 
         {
-            std::unique_ptr<int> foo (new int(10));
-            std::unique_ptr<int> bar (new int(20));
+            UniquePtr<int> foo (new int(10));
+            UniquePtr<int> bar (new int(20));
 
             foo.swap(bar);
 
             std::cout << "foo: " << *foo << '\n';
             std::cout << "bar: " << *bar << '\n';
         }
-        */
+
+
     }
 
 
